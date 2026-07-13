@@ -1,0 +1,10 @@
+Package: snaplinux-mp3
+Version: 2.3-1
+Section: sound
+Priority: optional
+Architecture: all
+Depends: python3, python3-tk, python3-pip, ffmpeg
+Maintainer: Rolando <tu_correo@ejemplo.com>
+Description: Descargador de audio MP3 desde YouTube con interfaz gráfica
+ SnapLinux MP3 permite descargar el audio de videos de YouTube
+ y convertirlo a MP3 usando yt-dlp, con una interfaz simple en Tkinter.

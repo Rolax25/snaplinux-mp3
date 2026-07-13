@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=SnapLinux MP3
+Comment=Descargador de audio MP3 desde YouTube
+Exec=python3 /opt/snaplinux/snaplinux.py
+Icon=snaplinux-logo
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;
