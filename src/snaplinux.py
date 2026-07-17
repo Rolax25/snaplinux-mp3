@@ -15,6 +15,7 @@ import colorsys
 import urllib.request
 import urllib.parse
 import urllib.error
+import multiprocessing
 from datetime import datetime
 from pathlib import Path
 
@@ -994,10 +995,10 @@ class SnapLinuxApp:
         self.alternar_controles("normal")
         self.descargando = False
 
-if __name__ == "__main__":
-    import multiprocessing
-    multiprocessing.freeze_support()  # Evita las ventanas infinitas
-
+if __name__ == '__main__':
+    # Esta línea es la que detiene las ventanas infinitas en Windows compilado:
+    multiprocessing.freeze_support()
+    
     root = tk.Tk()
     app = SnapLinuxApp(root)
     root.mainloop()
