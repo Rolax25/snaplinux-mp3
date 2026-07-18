@@ -28,7 +28,7 @@ jobs:
         run: pip install pyinstaller yt-dlp mutagen pillow
 
       - name: Compilar ejecutable (Linux)
-        run: xvfb-run --server-args="-screen 0 1024x768x24" pyinstaller --onefile --windowed --name=snaplinux-mp3-linux snaplinux.py
+        run: xvfb-run --server-args="-screen 0 1024x768x24" pyinstaller --onefile --windowed --name=snaplinux-mp3-linux src/snaplinux.py
 
       - name: Subir binario Linux
         uses: actions/upload-artifact@v4
@@ -52,7 +52,7 @@ jobs:
         run: pip install pyinstaller yt-dlp mutagen pillow
 
       - name: Compilar ejecutable (Windows)
-        run: pyinstaller --onefile --windowed --name=snaplinux-mp3-windows snaplinux.py
+        run: pyinstaller --onefile --windowed --name=snaplinux-mp3-windows src/snaplinux.py
 
       - name: Subir binario Windows
         uses: actions/upload-artifact@v4
