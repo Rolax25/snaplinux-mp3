@@ -1,0 +1,44 @@
+name: Compilar SnapLinux MP3 v3.2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Compilar en ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: snaplinux-mp3-linux
+          - os: windows-latest
+            artifact: snaplinux-mp3-windows.exe
+
+    steps:
+      - name: Descargar Código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar Dependencias del Sistema (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y python3-tk
+
+      - name: Instalar Librerías de Python
+        run: pip install pyinstaller yt-dlp mutagen pillow
+
+      - name: Compilar ejecutable
+        run: pyinstaller --onefile --windowed --name=${{ matrix.artifact }} main.py
+
+      - name: Subir binario listo para descargar
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}

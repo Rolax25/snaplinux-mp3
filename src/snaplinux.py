@@ -20,9 +20,6 @@ from datetime import datetime
 from pathlib import Path
 
 # Detecta si estamos corriendo como .exe compilado (PyInstaller) en vez de script normal.
-# Esto es CRÍTICO: en un .exe congelado, sys.executable apunta al propio .exe,
-# no a un intérprete de Python real. Usarlo con subprocess.run([sys.executable, ...])
-# relanza el programa completo en bucle infinito (las "ventanas infinitas").
 FROZEN = getattr(sys, "frozen", False)
 
 BG = "#1e1e2e"
@@ -153,7 +150,7 @@ class SnapLinuxApp:
             self.root.geometry(f"{ancho}x{alto}+0+0")
         self.root.resizable(True, True)
 
-    def configure_estilos(self):
+    def configurar_estilos(self):
         self.estilos = ttk.Style()
         self.estilos.theme_use("clam")
         self.estilos.configure(".", background=BG, foreground=TEXT, font=("sans-serif", 10))
@@ -772,7 +769,7 @@ class SnapLinuxApp:
         except Exception:
             return None
 
-    def _resultado_portada(self, img_bytes):
+    def _resultado_portada((self, img_bytes):
         self.portada_encontrada = img_bytes is not None
         if img_bytes:
             self.portada_bytes = img_bytes
@@ -909,10 +906,7 @@ class SnapLinuxApp:
             self.root.after(0, lambda: self.lbl_progreso_detalle.config(text=f"{p:.0f}%"))
 
     def _ubicacion_ffmpeg(self):
-        """Busca el ejecutable de ffmpeg en el sistema o en el mismo directorio del programa.
-        Si la app se ejecuta desde un .exe congelado por PyInstaller, comprueba tanto la carpeta 
-        temporal interna (_MEIPASS) como la carpeta externa donde el usuario colocó el programa."""
-        # Candidato 1: Carpeta donde reside el ejecutable final o el script de python
+        """Busca el ejecutable de ffmpeg en el sistema o en el mismo directorio del programa."""
         dir_ejecutable = os.path.dirname(sys.executable) if FROZEN else os.path.dirname(os.path.abspath(__file__))
         nombre_binario = "ffmpeg.exe" if sys.platform.startswith("win") else "ffmpeg"
         
@@ -920,7 +914,6 @@ class SnapLinuxApp:
         if os.path.exists(candidato_local):
             return dir_ejecutable
 
-        # Candidato 2: Si está congelado, revisar la raíz de descompresión interna (_MEIPASS)
         if FROZEN:
             base_frozen = getattr(sys, "_MEIPASS", dir_ejecutable)
             candidato_frozen = os.path.join(base_frozen, nombre_binario)
