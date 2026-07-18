@@ -769,7 +769,7 @@ class SnapLinuxApp:
         except Exception:
             return None
 
-    def _resultado_portada((self, img_bytes):
+    def _resultado_portada(self, img_bytes):
         self.portada_encontrada = img_bytes is not None
         if img_bytes:
             self.portada_bytes = img_bytes
