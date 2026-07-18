@@ -19,6 +19,12 @@ import multiprocessing
 from datetime import datetime
 from pathlib import Path
 
+# Detecta si estamos corriendo como .exe compilado (PyInstaller) en vez de script normal.
+# Esto es CRÍTICO: en un .exe congelado, sys.executable apunta al propio .exe,
+# no a un intérprete de Python real. Usarlo con subprocess.run([sys.executable, ...])
+# relanza el programa completo en bucle infinito (las "ventanas infinitas").
+FROZEN = getattr(sys, "frozen", False)
+
 BG = "#1e1e2e"
 SURFACE0 = "#292a3d"
 SURFACE1 = "#313244"
@@ -367,8 +373,16 @@ class SnapLinuxApp:
         ttk.Button(pad_frame, text="Cerrar", style="Secundario.TButton", command=ventana.destroy).pack(anchor=tk.E, pady=(16, 0))
 
     def _abrir_carpeta_descargas(self):
-        try: subprocess.Popen(["xdg-open", self.carpeta_var.get()])
-        except Exception as e: messagebox.showerror("Error", f"No se pudo abrir la carpeta:\n{e}")
+        carpeta = self.carpeta_var.get()
+        try:
+            if sys.platform.startswith("win"):
+                os.startfile(carpeta)  # xdg-open no existe en Windows
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", carpeta])
+            else:
+                subprocess.Popen(["xdg-open", carpeta])
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo abrir la carpeta:\n{e}")
 
     def _crear_fila_url(self):
         fila = tk.Frame(self.main_frame, bg=BG)
@@ -651,11 +665,30 @@ class SnapLinuxApp:
 
     def verificar_dependencias_inicio(self):
         try:
-            subprocess.run([sys.executable, "-c", "import yt_dlp, mutagen, PIL"], check=True, timeout=5)
+            if FROZEN:
+                # En el .exe compilado las librerías ya vienen empaquetadas dentro del
+                # propio ejecutable: basta con importarlas en este mismo proceso.
+                # NO usar subprocess.run([sys.executable, ...]) aquí: en un .exe congelado
+                # sys.executable es el propio programa, y eso relanza el programa completo
+                # (bucle infinito de ventanas).
+                import yt_dlp, mutagen, PIL  # noqa: F401
+            else:
+                subprocess.run([sys.executable, "-c", "import yt_dlp, mutagen, PIL"], check=True, timeout=5)
             self.root.after(0, self.log_consola, f"[{self.timestamp()}] Dependencias correctas.\n")
-        except Exception: self.root.after(0, self.log_consola, f"[{self.timestamp()}] Faltan dependencias externas.\n")
+        except Exception:
+            self.root.after(0, self.log_consola, f"[{self.timestamp()}] Faltan dependencias externas.\n")
 
     def iniciar_actualizacion(self):
+        if FROZEN:
+            # Un .exe de un solo archivo no puede reinstalarse sus propias dependencias
+            # vía pip (no existe un intérprete de Python separado al que llamar).
+            messagebox.showinfo(
+                "SnapLinux MP3",
+                "La actualización automática de librerías no está disponible en la versión "
+                ".exe para Windows.\n\nPara obtener la última versión, descarga el instalador "
+                "más reciente desde la página de Releases en GitHub."
+            )
+            return
         self.actualizando = True
         self.alternar_controles("disabled")
         threading.Thread(target=self.actualizar_librerias, daemon=True).start()
