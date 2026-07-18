@@ -30,6 +30,12 @@ jobs:
       - name: Compilar ejecutable (Linux)
         run: xvfb-run --server-args="-screen 0 1024x768x24" pyinstaller --onefile --windowed --name=snaplinux-mp3-linux snaplinux.py
 
+      - name: Subir binario Linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: snaplinux-mp3-linux
+          path: dist/snaplinux-mp3-linux
+
   build-windows:
     name: Compilar en Windows
     runs-on: windows-latest
