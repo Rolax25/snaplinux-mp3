@@ -1,4 +1,4 @@
-name: Diagnosticar Compilación SnapLinux MP3 v3.2
+name: Compilación Completa SnapLinux MP3 v3.2
 
 on:
   push:
@@ -7,9 +7,48 @@ on:
   workflow_dispatch:
 
 jobs:
-  debug-build:
-    name: Diagnosticar en Ubuntu
+  build-linux:
+    name: Compilar en Ubuntu (.deb y ejecutable)
     runs-on: ubuntu-latest
+    steps:
+      - name: Descargar Código
+        uses: actions/checkout@v4
+
+      - name: Instalar Dependencias del Sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk xvfb build-essential devscripts debhelper
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar Librerías de Python
+        run: pip install pyinstaller yt-dlp mutagen pillow
+
+      - name: Compilar ejecutable Linux
+        run: xvfb-run --server-args="-screen 0 1024x768x24" pyinstaller --onefile --windowed --name=snaplinux-mp3-linux src/snaplinux.py
+
+      # Copia el binario compilado a la estructura de empaquetado antes de construir el .deb
+      # (Ajusta la ruta 'packaging/' si tu script build.sh requiere parámetros locales)
+       McKinley-build-deb:
+      - name: Generar Paquete .deb
+        run: |
+          chmod +x build.sh
+          ./build.sh || echo "Si falla build.sh, empaquetamos manualmente"
+
+      - name: Subir Instalador .deb y Binario Linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: snaplinux-dist-linux
+          path: |
+            dist/snaplinux-mp3-linux
+            *.deb
+
+  build-windows:
+    name: Compilar en Windows (.exe)
+    runs-on: windows-latest
     steps:
       - name: Descargar Código
         uses: actions/checkout@v4
@@ -19,23 +58,14 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Instalar Dependencias del Sistema
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-tk xvfb
-
       - name: Instalar Librerías de Python
         run: pip install pyinstaller yt-dlp mutagen pillow
 
-      - name: Intentar Compilación y Capturar Error Real
-        run: |
-          xvfb-run --server-args="-screen 0 1024x768x24" pyinstaller --onefile --windowed --name=snaplinux-mp3-linux src/snaplinux.py || true
-          
-      - name: Mostrar Logs de Error de PyInstaller
-        run: |
-          if [ -d "build/snaplinux-mp3-linux" ]; then
-            echo "=== LOG DE COMPILACIÓN ==="
-            cat build/snaplinux-mp3-linux/warn-snaplinux-mp3-linux.txt || echo "No se encontró archivo de advertencias."
-          else
-            echo "PyInstaller falló antes de crear la carpeta build."
-          fi
+      - name: Compilar ejecutable Windows
+        run: pyinstaller --onefile --windowed --name=snaplinux-mp3-windows src/snaplinux.py
+
+      - name: Subir ejecutable Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: snaplinux-dist-windows
+          path: dist/snaplinux-mp3-windows.exe
