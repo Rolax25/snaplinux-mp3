@@ -3,7 +3,7 @@ name: Compilar SnapLinux MP3 a Windows EXE
 on:
   push:
     tags:
-      - 'v*' # Se activa al subir etiquetas como v3.0, v4.0, etc.
+      - 'v*'
 
 jobs:
   build:
@@ -34,7 +34,7 @@ jobs:
 
     - name: Compilar con PyInstaller (.EXE Único)
       run: |
-        pyinstaller --onefile --windowed --add-data "ffmpeg.exe;." --add-data "ffprobe.exe;." snaplinux.py
+        pyinstaller --onefile --windowed --add-data "ffmpeg.exe;." --add-data "ffprobe.exe;." src/snaplinux.py
 
     - name: Crear Release Oficial en GitHub
       uses: softprops/action-gh-release@v2

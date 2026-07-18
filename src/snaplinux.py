@@ -122,7 +122,6 @@ class SnapLinuxApp:
         self.analizando = False
         self.consola_visible = False
         
-        # RGB Activo por defecto en el inicio del programa
         self.rgb_activo = True
         self._rgb_job = None
         self._rgb_hue = 0.0
@@ -139,13 +138,9 @@ class SnapLinuxApp:
         self.crear_interfaz()
         
         self._actualizar_texto_calidad()
-        
-        # Iniciar animación RGB de inmediato
         self._animar_rgb()
         
         threading.Thread(target=self.verificar_dependencias_inicio, daemon=True).start()
-        
-        # Lanzar la ventana de tutorial automáticamente al iniciar la app
         self.root.after(300, lambda: self.mostrar_tutorial(auto=True))
 
     def _configurar_pantalla_completa(self):
@@ -158,7 +153,7 @@ class SnapLinuxApp:
             self.root.geometry(f"{ancho}x{alto}+0+0")
         self.root.resizable(True, True)
 
-    def configurar_estilos(self):
+    def configure_estilos(self):
         self.estilos = ttk.Style()
         self.estilos.theme_use("clam")
         self.estilos.configure(".", background=BG, foreground=TEXT, font=("sans-serif", 10))
@@ -301,7 +296,6 @@ class SnapLinuxApp:
         ventana.transient(self.root)
         ventana.grab_set()
 
-        # Añadimos un scroll por si la información es extensa
         canvas_cred = tk.Canvas(ventana, bg=SURFACE0, highlightthickness=0)
         scroll_cred = ttk.Scrollbar(ventana, orient="vertical", command=canvas_cred.yview, style="Vertical.TScrollbar")
         canvas_cred.configure(yscrollcommand=scroll_cred.set)
@@ -317,17 +311,14 @@ class SnapLinuxApp:
         canvas_cred.bind("<Configure>", _ajustar_ancho_cred)
         interior.bind("<Configure>", lambda e: canvas_cred.configure(scrollregion=canvas_cred.bbox("all")))
 
-        # CORRECCIÓN: Cambiado tk.Frame por ttk.Frame para que soporte padding de manera correcta
         pad_frame = ttk.Frame(interior, padding="20")
         pad_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Encabezado
         tk.Label(pad_frame, text="🏆 SnapLinux MP3 v3.0", bg=SURFACE0, fg=MAUVE, font=("sans-serif", 16, "bold")).pack(anchor=tk.W)
         tk.Label(pad_frame, text="Gestor avanzado de descargas y metadatos multimedia.", bg=SURFACE0, fg=SUBTEXT, font=("sans-serif", 9, "italic")).pack(anchor=tk.W, pady=(0, 12))
         
         tk.Frame(pad_frame, bg=SURFACE2, height=1).pack(fill=tk.X, pady=(0, 12))
 
-        # Sección de Creadores
         tk.Label(pad_frame, text="👥 EQUIPO DE DESARROLLO", bg=SURFACE0, fg=TEAL, font=("sans-serif", 11, "bold")).pack(anchor=tk.W, pady=(0, 6))
         
         creadores = [
@@ -345,7 +336,6 @@ class SnapLinuxApp:
 
         tk.Frame(pad_frame, bg=SURFACE2, height=1).pack(fill=tk.X, pady=14)
 
-        # Sección de Tecnologías y APIs
         tk.Label(pad_frame, text="🛠 APIS & MOTOR DE BÚSQUEDA", bg=SURFACE0, fg=TEAL, font=("sans-serif", 11, "bold")).pack(anchor=tk.W, pady=(0, 6))
         
         apis = [
@@ -363,20 +353,18 @@ class SnapLinuxApp:
 
         tk.Frame(pad_frame, bg=SURFACE2, height=1).pack(fill=tk.X, pady=14)
 
-        # Librerías del Núcleo
         tk.Label(pad_frame, text="📦 LIBRERÍAS DEL NÚCLEO", bg=SURFACE0, fg=TEAL, font=("sans-serif", 11, "bold")).pack(anchor=tk.W, pady=(0, 6))
         
         libs = "yt-dlp  •  FFmpeg  •  Mutagen (ID3/MP4/FLAC)  •  Pillow (PIL)  •  Tkinter"
         tk.Label(pad_frame, text=libs, bg=SURFACE0, fg=TEXT, font=("sans-serif", 10), wraplength=480, justify="left").pack(anchor=tk.W, padx=4)
 
-        # Botón cerrar
         ttk.Button(pad_frame, text="Cerrar", style="Secundario.TButton", command=ventana.destroy).pack(anchor=tk.E, pady=(16, 0))
 
     def _abrir_carpeta_descargas(self):
         carpeta = self.carpeta_var.get()
         try:
             if sys.platform.startswith("win"):
-                os.startfile(carpeta)  # xdg-open no existe en Windows
+                os.startfile(carpeta)
             elif sys.platform == "darwin":
                 subprocess.Popen(["open", carpeta])
             else:
@@ -666,11 +654,6 @@ class SnapLinuxApp:
     def verificar_dependencias_inicio(self):
         try:
             if FROZEN:
-                # En el .exe compilado las librerías ya vienen empaquetadas dentro del
-                # propio ejecutable: basta con importarlas en este mismo proceso.
-                # NO usar subprocess.run([sys.executable, ...]) aquí: en un .exe congelado
-                # sys.executable es el propio programa, y eso relanza el programa completo
-                # (bucle infinito de ventanas).
                 import yt_dlp, mutagen, PIL  # noqa: F401
             else:
                 subprocess.run([sys.executable, "-c", "import yt_dlp, mutagen, PIL"], check=True, timeout=5)
@@ -680,8 +663,6 @@ class SnapLinuxApp:
 
     def iniciar_actualizacion(self):
         if FROZEN:
-            # Un .exe de un solo archivo no puede reinstalarse sus propias dependencias
-            # vía pip (no existe un intérprete de Python separado al que llamar).
             messagebox.showinfo(
                 "SnapLinux MP3",
                 "La actualización automática de librerías no está disponible en la versión "
@@ -788,7 +769,7 @@ class SnapLinuxApp:
                 img_url = res[0]["artworkUrl100"].replace("100x100bb", "600x600bb")
                 with urllib.request.urlopen(urllib.request.Request(img_url, headers=HEADERS_NAVEGADOR), timeout=8) as img_r:
                     return img_r.read()
-        except Exception as e:
+        except Exception:
             return None
 
     def _resultado_portada(self, img_bytes):
@@ -875,7 +856,7 @@ class SnapLinuxApp:
                     if texto_limpio:
                         self.root.after(0, self._resultado_letra, texto_limpio, "Motor Web Scraper (Letras.com)")
                         return
-        except Exception as e:
+        except Exception:
             pass
         self.root.after(0, self._resultado_letra, None, None)
 
@@ -928,14 +909,25 @@ class SnapLinuxApp:
             self.root.after(0, lambda: self.lbl_progreso_detalle.config(text=f"{p:.0f}%"))
 
     def _ubicacion_ffmpeg(self):
-        """Si estamos en el .exe compilado, busca ffmpeg.exe embebido junto al ejecutable.
-        En Linux/script normal devuelve None (usa el ffmpeg del sistema, vía apt)."""
-        if not FROZEN:
-            return None
-        base = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
-        nombre = "ffmpeg.exe" if sys.platform.startswith("win") else "ffmpeg"
-        candidato = os.path.join(base, nombre)
-        return base if os.path.exists(candidato) else None
+        """Busca el ejecutable de ffmpeg en el sistema o en el mismo directorio del programa.
+        Si la app se ejecuta desde un .exe congelado por PyInstaller, comprueba tanto la carpeta 
+        temporal interna (_MEIPASS) como la carpeta externa donde el usuario colocó el programa."""
+        # Candidato 1: Carpeta donde reside el ejecutable final o el script de python
+        dir_ejecutable = os.path.dirname(sys.executable) if FROZEN else os.path.dirname(os.path.abspath(__file__))
+        nombre_binario = "ffmpeg.exe" if sys.platform.startswith("win") else "ffmpeg"
+        
+        candidato_local = os.path.join(dir_ejecutable, nombre_binario)
+        if os.path.exists(candidato_local):
+            return dir_ejecutable
+
+        # Candidato 2: Si está congelado, revisar la raíz de descompresión interna (_MEIPASS)
+        if FROZEN:
+            base_frozen = getattr(sys, "_MEIPASS", dir_ejecutable)
+            candidato_frozen = os.path.join(base_frozen, nombre_binario)
+            if os.path.exists(candidato_frozen):
+                return base_frozen
+                
+        return None
 
     def ejecutar_descarga(self, url):
         import yt_dlp
@@ -977,7 +969,7 @@ class SnapLinuxApp:
         ruta_ffmpeg = self._ubicacion_ffmpeg()
         if ruta_ffmpeg:
             opts['ffmpeg_location'] = ruta_ffmpeg
-            self.root.after(0, self.log_consola, f"[{self.timestamp()}] Usando ffmpeg embebido: {ruta_ffmpeg}\n")
+            self.root.after(0, self.log_consola, f"[{self.timestamp()}] Ubicación FFmpeg detectada: {ruta_ffmpeg}\n")
         
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
@@ -1044,9 +1036,7 @@ class SnapLinuxApp:
         self.descargando = False
 
 if __name__ == '__main__':
-    # Esta línea es la que detiene las ventanas infinitas en Windows compilado:
     multiprocessing.freeze_support()
-    
     root = tk.Tk()
     app = SnapLinuxApp(root)
     root.mainloop()
