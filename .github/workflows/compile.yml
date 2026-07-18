@@ -11,6 +11,7 @@ jobs:
     name: Compilar en ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false # Evita que si falla uno se cancele el otro inmediatamente
       matrix:
         include:
           - os: ubuntu-latest
@@ -29,12 +30,19 @@ jobs:
 
       - name: Instalar Dependencias del Sistema (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y python3-tk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk xvfb lxde
 
       - name: Instalar Librerías de Python
         run: pip install pyinstaller yt-dlp mutagen pillow
 
-      - name: Compilar ejecutable
+      - name: Compilar ejecutable (Linux con Pantalla Virtual)
+        if: matrix.os == 'ubuntu-latest'
+        run: xvfb-run --server-args="-screen 0 1024x768x24" pyinstaller --onefile --windowed --name=${{ matrix.artifact }} main.py
+
+      - name: Compilar ejecutable (Windows)
+        if: matrix.os == 'windows-latest'
         run: pyinstaller --onefile --windowed --name=${{ matrix.artifact }} main.py
 
       - name: Subir binario listo para descargar
