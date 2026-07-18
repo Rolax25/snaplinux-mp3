@@ -927,6 +927,16 @@ class SnapLinuxApp:
             self.root.after(0, lambda: self.progress_bar.config(value=p))
             self.root.after(0, lambda: self.lbl_progreso_detalle.config(text=f"{p:.0f}%"))
 
+    def _ubicacion_ffmpeg(self):
+        """Si estamos en el .exe compilado, busca ffmpeg.exe embebido junto al ejecutable.
+        En Linux/script normal devuelve None (usa el ffmpeg del sistema, vía apt)."""
+        if not FROZEN:
+            return None
+        base = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
+        nombre = "ffmpeg.exe" if sys.platform.startswith("win") else "ffmpeg"
+        candidato = os.path.join(base, nombre)
+        return base if os.path.exists(candidato) else None
+
     def ejecutar_descarga(self, url):
         import yt_dlp
         f_ext = self.formato_var.get().lower()
@@ -963,6 +973,11 @@ class SnapLinuxApp:
             'quiet': True,
             'logger': LoggerYtDlp(self)
         }
+
+        ruta_ffmpeg = self._ubicacion_ffmpeg()
+        if ruta_ffmpeg:
+            opts['ffmpeg_location'] = ruta_ffmpeg
+            self.root.after(0, self.log_consola, f"[{self.timestamp()}] Usando ffmpeg embebido: {ruta_ffmpeg}\n")
         
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
