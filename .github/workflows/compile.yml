@@ -7,18 +7,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Compilar en ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false # Evita que si falla uno se cancele el otro inmediatamente
-      matrix:
-        include:
-          - os: ubuntu-latest
-            artifact: snaplinux-mp3-linux
-          - os: windows-latest
-            artifact: snaplinux-mp3-windows.exe
-
+  build-linux:
+    name: Compilar en Ubuntu
+    runs-on: ubuntu-latest
     steps:
       - name: Descargar Código
         uses: actions/checkout@v4
@@ -28,25 +19,37 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Instalar Dependencias del Sistema (Linux)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Instalar Dependencias del Sistema
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-tk xvfb lxde
+          sudo apt-get install -y python3-tk xvfb
 
       - name: Instalar Librerías de Python
         run: pip install pyinstaller yt-dlp mutagen pillow
 
-      - name: Compilar ejecutable (Linux con Pantalla Virtual)
-        if: matrix.os == 'ubuntu-latest'
-        run: xvfb-run --server-args="-screen 0 1024x768x24" pyinstaller --onefile --windowed --name=${{ matrix.artifact }} main.py
+      - name: Compilar ejecutable (Linux)
+        run: xvfb-run --server-args="-screen 0 1024x768x24" pyinstaller --onefile --windowed --name=snaplinux-mp3-linux snaplinux.py
+
+  build-windows:
+    name: Compilar en Windows
+    runs-on: windows-latest
+    steps:
+      - name: Descargar Código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar Librerías de Python
+        run: pip install pyinstaller yt-dlp mutagen pillow
 
       - name: Compilar ejecutable (Windows)
-        if: matrix.os == 'windows-latest'
-        run: pyinstaller --onefile --windowed --name=${{ matrix.artifact }} main.py
+        run: pyinstaller --onefile --windowed --name=snaplinux-mp3-windows snaplinux.py
 
-      - name: Subir binario listo para descargar
+      - name: Subir binario Windows
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact }}
-          path: dist/${{ matrix.artifact }}
+          name: snaplinux-mp3-windows.exe
+          path: dist/snaplinux-mp3-windows.exe
