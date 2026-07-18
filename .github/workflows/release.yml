@@ -65,6 +65,8 @@ jobs:
   release:
     needs: [build-linux-deb, build-windows-exe]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Descargar artefacto .deb
         uses: actions/download-artifact@v4
